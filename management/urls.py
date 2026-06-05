@@ -1,5 +1,6 @@
 from django.urls import path
-from main.models import SchoolFeeStructure,FeePayment,Event,Announcement
+from main.models import Event,Announcement
+from fees.models import SchoolFeeStructure, FeePayment, FeeComponent
 from main.forms import ParentForm, TeacherForm,FeeStructureForm,FeePaymentForm,EventForm,AnnouncementForm
 from . import views  
 
@@ -131,7 +132,11 @@ urlpatterns = [
      path("settings/register/<str:item_type>/", views.register_setting_item, name="register_setting_item"),
      path("settings/edit/<str:item_type>/<int:pk>/", views.edit_setting_item, name="edit_setting_item"),
      path("settings/delete/<str:item_type>/<int:pk>/", views.delete_setting_item, name="delete_setting_item"),
-
+     path('visitors/messages/', views.visitor_messages, name='visitors_messages'),
+     path('visitors/messages/<int:message_id>/read/', views.mark_read, name='mark_read'),
+     path('visitors/messages/<int:message_id>/unread/', views.mark_unread, name='mark_unread'),
+     path('visitors/messages/<int:message_id>/delete/', views.delete_message, name='delete_message'),
+     path('messages/selection/',views.Message_type.as_view(),name='message_type' ),
 
 
 

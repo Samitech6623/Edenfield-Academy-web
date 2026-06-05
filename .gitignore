@@ -1,19 +1,56 @@
-# Django
+# ------------------------------
+# Django / Python
+# ------------------------------
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 *.sqlite3
 db.sqlite3
 
+# Logs
+*.log
 
-# Environment Variables & Virtual Environment
+# Migrations (optional – only ignore if you know what you’re doing)
+# */migrations/
+
+# ------------------------------
+# Environment Variables & Virtual Environments
+# ------------------------------
 .env
-/venv/
-/myenv/
+venv/
+myenv/
+.env.bak
+*.env
 
-# IDE files
+# ------------------------------
+# IDE / Editor
+# ------------------------------
 .idea/
 .vscode/
+*.swp
+*.swo
 
+# ------------------------------
 # Operating System Files
+# ------------------------------
 .DS_Store
 Thumbs.db
+
+# ------------------------------
+# Media / Static (images, etc.)
+# ------------------------------
+# Ignore user-uploaded media files (common in Django projects)
+media/
+uploads/
+
+# Ignore all image files (if you don’t want *any* images tracked)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.svg
+
+

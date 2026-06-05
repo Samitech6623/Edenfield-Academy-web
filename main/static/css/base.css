@@ -65,6 +65,7 @@ nav {
     flex-direction: row;
     align-items: center;
     gap: 20px;
+    padding-right: 2%;
 }
 
 nav a {
@@ -421,4 +422,8 @@ nav a.active-link {
     main {
         margin-top: var(--header-mobile-height);
     }
+}
+
+li .success{
+    color: green;
 }

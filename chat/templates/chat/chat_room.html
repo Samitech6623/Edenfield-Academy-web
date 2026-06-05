@@ -1,0 +1,99 @@
+{% extends base_template %}
+{% load static %}
+
+{% block main_content %}
+
+<link rel="stylesheet" href="{% static 'css/chat_room.css' %}">
+
+<div class="chat-container">
+  <!-- User list -->
+  <div class="user-list">
+    <h3>Messages</h3>
+
+    <!-- New chat dropdown -->
+    <div class="new-chat">
+      <select id="new-chat-select">
+        <option value="">Start New Chat</option>
+        {% for user in allowed_users %}
+          {% if user not in users_chatted_with %}
+            <option value="{{ user.username }}">{{ user.username }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+
+    <ul id="user-list">
+      {% for user in users_chatted_with %}
+        <li data-username="{{ user.username }}"
+            onclick="window.location.href='{% url 'chat_room' user.username %}'"
+            {% if receiver and user.username == receiver.username %}class="active"{% endif %}>
+          <span>{{ user.username }}</span>
+          {% if user.unread_count > 0 %}
+            <span class="badge">{{ user.unread_count }}</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Chat area -->
+  <div class="chat-box">
+    {% if receiver %}
+      <div class="chat-header">
+        <div>Chatting with {{ receiver.username }}</div>
+        <button class="chat-menu" aria-label="Toggle navigation" id="chatMenu">&#9776;</button>
+        <div id="toggleMenu" class="hidden">
+          <a href="#">Delete</a>
+          <a href="#">Pin</a>
+          <a href="#">Archive</a>
+        </div>
+      </div>
+
+      <div class="messages" id="chat-messages">
+        {% for msg in messages %}
+          <div class="message {% if msg.sender == request.user %}sent{% else %}received{% endif %}">
+            <strong>
+              {% if msg.sender == request.user %}You{% else %}{{ receiver.username }}{% endif %}
+            </strong>
+            <div>
+              {{ msg.body }}
+              {% if msg.sender == request.user %}
+                <span class="tick">{% if msg.is_read %}✔✔{% else %}✔{% endif %}</span>
+              {% endif %}
+            </div>
+            <small>{{ msg.timestamp|date:"H:i" }}</small>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="chat-input">
+        <form id="sendForm">
+          {% csrf_token %}
+          <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off">
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    {% else %}
+      <div class="chat-header">Select a user to start chatting</div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+window.chatConfig = {
+    receiver: "{{ receiver.username|default:''|escapejs }}",
+    requestUser: "{{ request.user.username|escapejs }}",
+    lastMessageId: {{ last_message_id|default:0 }},
+    getMessagesUrl: "{% if receiver %}{% url 'get_messages' receiver.username %}{% endif %}",
+    sendUrl: "{% if receiver %}{% url 'chat_room' receiver.username %}{% endif %}"
+};
+
+
+// SAFE base URL for new chats (respects /main/)
+// In chat_room.html
+window.chatBaseUrl = "{% url request.resolver_match.namespace|add:':chat_room' 'USERNAME' %}".replace("USERNAME/", "");
+</script>
+
+<script src="{% static 'js/chat_room.js' %}" defer></script>
+
+{% endblock %}

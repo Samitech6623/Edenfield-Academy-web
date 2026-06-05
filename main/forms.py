@@ -1,7 +1,9 @@
 from django.contrib.auth.forms import UserCreationForm
 from django import forms
-from .models import (Parent, Student, Teacher,ClassRoom,User,SchoolFeeStructure,FeePayment,
-        Announcement, Event,Session, Exam, Result,Grade,FeeComponent,Subject,GradingSystem,TeachingClassAssignment)
+from .models import (Parent, Student, Teacher,ClassRoom,User,
+        Announcement, Event,Session, Exam, Result,Grade,Subject,
+        GradingSystem,TeachingClassAssignment,Chat,VisitorMessage)
+from fees.models import SchoolFeeStructure, FeePayment, FeeComponent
 
 
 class UserForm(UserCreationForm):
@@ -175,4 +177,36 @@ class TeachingClassAssignmentForm(forms.ModelForm):
     class Meta:
         model = TeachingClassAssignment
         fields = "__all__"
+
+class VisitorMessageForm(forms.ModelForm):
+    class Meta:
+        model = VisitorMessage
+        fields = ['name', 'email', 'phone_number', 'subject', 'message']
+        widgets = {
+                    'name': forms.TextInput(attrs={'placeholder': 'Your Full Name'}),
+                    'email': forms.EmailInput(attrs={'placeholder': 'Your Email Address (optional)'}),
+                    'phone_number': forms.TextInput(attrs={'placeholder': 'Your Phone Number (optional)'}),
+                    'subject': forms.TextInput(attrs={'placeholder': 'Subject of Your Message'}),
+                    'message': forms.Textarea(attrs={'placeholder': 'Write Your Message Here'}),
+                }
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data.get('phone_number')
+        if phone_number:
+            if not phone_number.isdigit():
+                raise forms.ValidationError("Phone number must contain only digits.")
+            if len(phone_number) != 10:  # Optional: Check for exactly 10 digits
+                raise forms.ValidationError("Phone number must be 10 digits.")
+        return phone_number
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        phone_number = cleaned_data.get('phone_number')
         
+        if not email and not phone_number:
+            raise forms.ValidationError("Please provide either an email address or a phone number.")
+        
+        return cleaned_data
+
+
+    

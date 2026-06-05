@@ -5,7 +5,8 @@ from django.contrib.auth import login,logout
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm,AuthenticationForm,PasswordChangeForm,PasswordResetForm
-from .models import Student,Teacher,Parent,ClassRoom,SchoolFeeStructure,FeePayment,Announcement,Event,Result,Subject,Exam, Session,Grade
+from .models import Student,Teacher,Parent,ClassRoom,Announcement,Event,Result,Subject,Exam, Session,Grade
+from fees.models import SchoolFeeStructure, FeePayment, FeeComponent,LedgerEntry
 from django.urls import reverse_lazy
 from django.db.models import Sum,Count,Avg
 from django.utils import timezone
@@ -204,7 +205,40 @@ def handle_other_class_results(request, exam, selected_class, students, subjects
 
     return formset
 
+def student_statement( student_id):
+    student = get_object_or_404(Student, id=student_id)
+    entries = LedgerEntry.objects.filter(student=student).order_by('date')
 
+    balance = 0
+    total_paid = 0
+    statement_entries = []
+
+    for entry in entries:
+        if entry.entry_type == "DEBIT":
+            balance += entry.amount
+        elif entry.entry_type in ["CREDIT", "REFUND"]:
+            balance -= entry.amount
+            if entry.entry_type == "CREDIT":
+                total_paid += entry.amount
+
+        statement_entries.append({
+            'date': entry.date,
+            'description': entry.description,
+            'debit': entry.amount if entry.entry_type == "DEBIT" else None,
+            'credit': entry.amount if entry.entry_type in ["CREDIT", "REFUND"] else None,
+            'balance': balance,
+            'receipt_number': entry.receipt_number,
+            'payment_method': entry.payment_method,
+        })
+
+    context = {
+        'student': student,
+        'statement_entries': statement_entries,
+        'final_balance': balance,
+        'total_paid': total_paid,
+        'status': "Cleared" if balance <= 0 else "Owing"
+    }
+    return context
 
 def get_fee_summary(student):
     # Get current session object

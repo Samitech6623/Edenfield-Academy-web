@@ -1,254 +1,239 @@
 {% extends "parents/parent_dashboard.html" %}
 
 {% block main_content %}
-<div class="container">
+<div class="container py-4">
     <h2 class="page-title">Fees Status - Term {{ selected_session.term }}, {{ selected_session.year }}</h2>
 
-    {# 2. Integration of the Selection Form - Bootstrap utilities used for layout #}
-    <div class="card p-3 mb-4">
-        <form method="get" class="d-flex align-items-center justify-content-between">
-            <div class="form-group me-3">
-                <label for="{{ form.session.id_for_label }}">Select Session:</label>
+    <div class="card p-3 mb-4 shadow-sm border-0">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="fw-bold mb-1" for="{{ form.session.id_for_label }}">Select Session:</label>
                 {{ form.session }}
             </div>
-            <div class="form-group me-3">
-                <label for="{{ form.class_room.id_for_label }}">Select Class:</label>
+            <div class="col-md-5">
+                <label class="fw-bold mb-1" for="{{ form.class_room.id_for_label }}">Select Class:</label>
                 {{ form.class_room }}
             </div>
-            <button type="submit" class="btn btn-primary mt-3">View Fees</button>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">View Fees</button>
+            </div>
         </form>
     </div>
 
     {# Fee Structure Detail Table #}
-    {% if fee_structure %}
-    <div class="card mb-4">
-        <h4 class="d-flex justify-content-between align-items-center p-3 mb-0" style="border-bottom: 1px solid #eee;">
-            <span>Viewing Fee Structure: {{ fee_structure.display_name }}</span>
-            <button class="btn btn-sm btn-outline-secondary">Download</button>
-        </h4>
-        
-        <div class="table-responsive">
-            <table class="statement-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Fee Component</th>
-                        <th style="text-align: right;">Amount (Ksh)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for component in fee_structure.components.all %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ component.name }}</td>
-                        <td style="text-align: right;">{{ component.amount|floatformat:2 }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3">No components defined for this fee structure.</td>
-                    </tr>
-                    {% endfor %}
-                    <tr class="total-row">
-                        {# 💡 FIX: Colspan is 2 (for # and Component columns) #}
-                        <td colspan="2" style="font-weight: bold; text-align: right;">TOTAL REQUIRED:</td>
-                        <td style="font-weight: bold; text-align: right;">
-                            Ksh {{ fee_structure.total_amount_required|floatformat:2 }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% else %}
-    <div class="card alert-warning p-3 mb-4">
-        <p class="mb-0">No fee structure defined for the selected class and session.</p>
-    </div>
-    {% endif %}
-    
-    {# Fees Summary Table (Wrap for responsiveness) #}
-    <h3 class="mb-3 mt-4">Student Summaries</h3>
+<div id="feeStructureContainer">
+{% if fee_structure %}
+<div class="card mb-4 shadow-sm border-0 overflow-hidden">
+    <h4 class="d-flex justify-content-between align-items-center p-3 mb-0 bg-light border-bottom">
+        <span class="fs-5">
+            Viewing Fee Structure:
+            <strong>{{ fee_structure.display_name }}</strong>
+        </span>
+    </h4>
+
     <div class="table-responsive">
-        <table class="fees-table">
+        <table class="statement-table w-100">
             <thead>
                 <tr>
-                    <th>Student</th>
-                    <th>Admission No</th>
-                    <th>Class</th>
-                    <th>Expected</th>
-                    <th>Total Paid</th>
-                    <th>Balance</th>
-                    <th>Status</th>
+                    <th>#</th>
+                    <th style="text-align:left;">Fee Component</th>
+                    <th style="text-align:right;">Amount</th>
                 </tr>
             </thead>
             <tbody>
-                {% for data in fees_data %}
+                {% for component in fee_structure.components.all %}
                 <tr>
-                    <td>{{ data.student.display_name }}</td>
-                    <td>{{ data.student.admission_number }}</td>
-                    <td>{{ data.class.name }}</td>
-                    <td>Ksh {{ data.amount_required|floatformat:2 }}</td>
-                    <td>Ksh {{ data.total_paid|floatformat:2 }}</td>
-                    <td>
-                        {% if data.balance > 0 %}
-                            <span class="balance-due">Ksh {{ data.balance|floatformat:2 }}</span>
-                        {% else %}
-                            <span class="balance-cleared">Cleared</span>
-                        {% endif %}
+                    <td>{{ forloop.counter }}</td>
+                    <td style="text-align:left;">{{ component.name }}</td>
+                    <td style="text-align:right;">
+                        Ksh {{ component.amount|floatformat:2 }}
                     </td>
-                    <td>{{ data.status }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7">No student fee records available for this selection.</td>
                 </tr>
                 {% endfor %}
+
+                <tr class="total-row">
+                    <td colspan="2" style="text-align:right;font-weight:bold">
+                        TOTAL REQUIRED
+                    </td>
+                    <td style="text-align:right;font-weight:bold">
+                        Ksh {{ fee_structure.total_amount_required|floatformat:2 }}
+                    </td>
+                </tr>
+
             </tbody>
         </table>
     </div>
+</div>
+{% endif %}
+</div>
+    
+<div class="col-md-6">
+            <label class="fw-bold mb-1">Select Child to view fee statement:</label>
+            <select id="studentSelector" class="form-select" onchange="updateDashboard()">
+                <option value="">-- Choose child --</option>
+                {% for child in children %}
+                    <option value="{{ child.id }}">{{ child.display_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-    {# Payment Statements (Wrap each statement table for responsiveness) #}
-    <div class="statements mt-5">
-        <h3 class="mb-3">Payment Statements</h3>
-        {% for data in fees_data %}
-            <div class="student-payments card p-3 mb-4">
-                <h4 class="mb-2">{{ data.student.display_name }} ({{ data.student.admission_number }})</h4>
-                <div class="table-responsive">
-                    <table class="statement-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th>Method</th>
-                                <th>Reference</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for payment in data.payments %}
-                                <tr>
-                                    <td>{{ payment.paid_on|date:"M d, Y" }}</td>
-                                    <td>Ksh {{ payment.amount|floatformat:2 }}</td>
-                                    <td>{{ payment.status }}</td>
-                                    <td>{{ payment.get_payment_method_display }}</td>
-                                    <td>{{ payment.receipt_number }}</td>
-                                </tr>
-                            {% empty %}
-                                <tr>
-                                    <td colspan="5">No payments recorded yet.</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
+    {# Fees Summary Table #}
+
+<div id="statementContainer">
+
+<div class="d-flex align-items-center mt-5 mb-3">
+    <h3 class="mb-0">Fee Statement: {{ student.display_name }}</h3>
 </div>
 
+<div class="table-responsive shadow-sm rounded">
+<table class="fees-table w-100">
+
+<thead>
+<tr>
+<th>Date</th>
+<th style="text-align:left;">Description</th>
+<th style="text-align:right;">Debit</th>
+<th style="text-align:right;">Credit</th>
+<th>Reference</th>
+<th style="text-align:right;">Balance</th>
+</tr>
+</thead>
+
+<tbody>
+{% for entry in statement_entries %}
+<tr>
+<td>{{ entry.date|date:"d M Y" }}</td>
+<td style="text-align:left;">{{ entry.description }}</td>
+<td class="text-debit" style="text-align:right">
+Ksh {{ entry.debit|floatformat:2 }}
+</td>
+<td class="text-credit" style="text-align:right">
+Ksh {{ entry.credit|floatformat:2 }}
+</td>
+<td>{{ entry.receipt_number|default:"-" }}</td>
+<td style="text-align:right;font-weight:bold">
+Ksh {{ entry.balance|floatformat:2 }}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+
+</table>
+</div>
+
+</div>
+</div>
+<script>
+
+const feeStructureUrl = "{% url 'ajax_fee_structure' %}";
+const statementUrl = "{% url 'ajax_statement' %}";
+
+
+function updateDashboard() {
+
+    const studentId = document.getElementById("studentSelector").value;
+    const sessionId = document.getElementById("id_session").value;
+    const classId = document.getElementById("id_class_room").value;
+
+    if (!studentId) return;
+
+    fetchStructure(studentId, sessionId, classId);
+    fetchStatement(studentId);
+}
+
+
+function fetchStructure(studentId, sessionId, classId) {
+
+    const container = document.getElementById("feeStructureContainer");
+
+    container.innerHTML =
+        '<div class="text-center p-4"><div class="spinner-border text-primary"></div></div>';
+
+    fetch(`${feeStructureUrl}?student=${studentId}&session=${sessionId}&class=${classId}`)
+        .then(response => response.text())
+        .then(html => {
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error("Error loading fee structure:", error);
+        });
+}
+
+
+function fetchStatement(studentId) {
+
+    const container = document.getElementById("statementContainer");
+
+    container.innerHTML =
+        '<div class="text-center p-4"><div class="spinner-border text-success"></div></div>';
+
+    fetch(`${statementUrl}?student=${studentId}`)
+        .then(response => response.text())
+        .then(html => {
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error("Error loading statement:", error);
+        });
+}
+
+</script>
 <style>
-/* ... (All your existing CSS styles are kept below this line) ... */
-.container {
-    margin: 30px auto;
-    max-width: 1000px;
-}
-.page-title {
-    text-align: center;
-    font-size: 24px;
-    margin-bottom: 20px;
-}
-/* Consolidated Table Styles */
+/* Core Layout */
+.container { margin: 30px auto; max-width: 1100px; }
+.page-title { text-align: center; font-size: 26px; margin-bottom: 25px; font-weight: 700; color: #2c3e50; }
+
+/* Table Styles - Vibrant Blue Headers */
 .fees-table, .statement-table {
     width: 100%;
     border-collapse: collapse;
     background: #fff;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    margin-bottom: 0; /* Set to 0 since the wrapping div has mb-4 */
+    margin-bottom: 0;
 }
-.fees-table th, .fees-table td,
-.statement-table th, .statement-table td {
-    padding: 12px 15px;
-    text-align: center;
-    border-bottom: 1px solid #eee;
-}
+
 .fees-table th, .statement-table th {
-    background: #3498db;
-    color: #fff;
-    font-weight: bold;
+    background: #3498db; 
+    color: #ffffff;
+    padding: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    border: none;
 }
 
-/* Specific style for the total row */
+.fees-table td, .statement-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+    text-align: center;
+}
+
+/* Specific styling for columns to ensure visual flow */
+.text-debit { color: #c0392b; }
+.text-credit { color: #27ae60; }
+
+/* Total Row Highlight */
 .total-row td {
-    border-top: 2px solid #3498db !important; /* Strong line above the total */
-    background: #f7f7f7; /* Slightly distinct background */
-}
-
-/* Balance Status Styles */
-.balance-due {
-    color: red;
-    font-weight: bold;
-}
-.balance-cleared {
-    color: green;
-    font-weight: bold;
-}
-
-/* Statement Sections */
-.statements h3 {
-    font-size: 20px;
-    margin-bottom: 15px;
-}
-.student-payments {
-    margin-bottom: 40px;
-}
-.student-payments h4 {
-    margin-bottom: 10px;
+    border-top: 3px solid #3498db !important;
+    background: #f8f9fa;
     color: #2c3e50;
 }
 
-/* Utility styles for form layout (retained and adjusted for Bootstrap conventions) */
-.d-flex { display: flex; }
-.align-items-center { align-items: center; }
-.justify-content-between { justify-content: space-between; }
-.form-group { margin-right: 15px; width: 50%; display: flex; flex-direction: row; gap: 5px; } 
-.form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
-.form-group select {
-     padding: 2px 8px; 
-    border: 1px solid #ccc; 
-    border-radius: 6px; 
-    width: 60%;
+/* Form Styling */
+form select {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
 }
-.btn {
-    background: #0066cc;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    text-decoration: none;
-}
-.btn:hover {
-    background: #004d99;
-}
-@media(max-width:600px){
-    .form-group { margin-right: 15px;
-         width: 100%; 
-         display: flex;
-          flex-direction: column;
-        justify-content: center;
-    align-items: center;
-    } 
 
-    form{
-        flex-direction: column;
-    }
-    form select{
-        width: 100%;
-        padding: 5px;
-        border-radius: 5px;
-    }
-    
+.btn-primary { background: #3498db; border: none; padding: 10px 20px; font-weight: 600; }
+.btn-primary:hover { background: #2980b9; }
+
+@media(max-width:768px){
+    .page-title { font-size: 20px; }
+    form { gap: 10px; }
 }
 </style>
 {% endblock %}

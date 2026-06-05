@@ -8,9 +8,10 @@ from django.contrib.auth import login,logout
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm,AuthenticationForm,PasswordChangeForm,PasswordResetForm
-from main.models import (Student,Teacher,Parent,ClassRoom,SchoolFeeStructure,FeePayment,
-                         Announcement,Event,Result,Subject,Exam, Session,GradingSystem,Grade,
-                         TeachingClassAssignment,FeeComponent)
+from main.models import (Student,Teacher,Parent,ClassRoom,Announcement,Event
+                         ,Result,Subject,Exam, Session,GradingSystem,Grade,
+                         TeachingClassAssignment,Chat,VisitorMessage)
+from fees.models import SchoolFeeStructure, FeePayment, FeeComponent
 from django.urls import reverse_lazy
 from django.db.models import Sum,Count,Avg
 from django.utils import timezone
@@ -52,7 +53,16 @@ def management_dashboard(request):
     total_students = Student.objects.count()
     total_teachers = Teacher.objects.count()
     total_parents = Parent.objects.count()
-    context = {"total_students":total_students,"total_teachers":total_teachers,"total_parents":total_parents}
+    visitors_unread = VisitorMessage.objects.filter(
+        is_read = False
+        ).count()
+    portal_users_unread = Chat.objects.filter(
+        receiver=request.user,
+        is_read=False
+    ).exclude(sender=request.user).count()
+    context = {"total_students":total_students,"total_teachers":total_teachers,
+               "total_parents":total_parents,"visitors_unread":visitors_unread,
+               "portal_users_unread":portal_users_unread}
 
     return render(request, 'management/base_management_dashboard.html',context=context)
 
@@ -546,6 +556,31 @@ def delete_setting_item(request, item_type, pk):
         "go_to_url":"view_setting_item"
     }
     return render(request, "management/settings/delete_form.html", context)
+
+
+def visitor_messages(request):
+    messages = VisitorMessage.objects.order_by('-created_at')
+    return render(request, 'management/visitors_messages.html', {'messages': messages})
+
+def mark_read(request, message_id):
+    msg = get_object_or_404(VisitorMessage, id=message_id)
+    msg.is_read = True
+    msg.save()
+    return redirect('visitors_messages')
+
+def mark_unread(request, message_id):
+    msg = get_object_or_404(VisitorMessage, id=message_id)
+    msg.is_read = False
+    msg.save()
+    return redirect('visitors_messages')
+
+def delete_message(request, message_id):
+    msg = get_object_or_404(VisitorMessage, id=message_id)
+    msg.delete()
+    return redirect('visitors_messages')
+
+class Message_type(TemplateView):
+    template_name = 'management/message_type_selection.html'
 
 
 

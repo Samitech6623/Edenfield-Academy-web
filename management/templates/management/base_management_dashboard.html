@@ -8,82 +8,121 @@
 
 {% block content %}
 <div class="dashboard-container">
+
     <!-- Sidebar -->
     <aside class="sidebar">
-        <h2>Management</h2>
-        <ul>
-            <li><a href="{% url 'management_dashboard' %}">🏠 Dashboard</a></li>
-            <li><a href="{% url 'manage_parents' %}">👨‍👩‍👦 Manage Parents</a></li>
-            <li><a href="{% url 'manage_teachers' %}">👩‍🏫 Teachers</a></li>
-            <li><a href="{% url 'manage_students' %}">👨‍🎓 Students</a></li>
-            <li><a href="{% url 'manage_classes' %}">📚 Manage Classes</a></li>
-            <li><a href="{% url 'manage_events' %}">📅 Manage Events</a></li>
-            <li><a href="{% url 'manage_announcements' %}">📢 Manage Announcements</a></li>
-            <li><a href="{% url 'reports_portal' %}">📊 Reports</a></li>
-            <li><a href="{% url 'manage_financials' %}">💰 Finances</a></li>
-            <li><a href="{% url 'settings_page' %}">⚙ Settings</a></li>
-            <li><a href="{% url 'portal_logout' %}">🚪 Logout</a></li>
-        </ul>
+        <div class="sidebar-header">
+            <h2>Management</h2>
+            <button class="sidebar-toggle" aria-expanded="true" onclick="toggleSidebar()">☰</button>
+        </div>
+       <ul id="sidebar-menu">
+    <li><a href="{% url 'management_dashboard' %}" 
+           class="{% if request.resolver_match.url_name == 'management_dashboard' %}active{% endif %}">
+           🏠 Dashboard</a></li>
+
+    <li><a href="{% url 'manage_parents' %}" 
+           class="{% if request.resolver_match.url_name == 'manage_parents' %}active{% endif %}">
+           👨‍👩‍👦 Manage Parents</a></li>
+
+    <li><a href="{% url 'manage_teachers' %}" 
+           class="{% if request.resolver_match.url_name == 'manage_teachers' %}active{% endif %}">
+           👩‍🏫 Teachers</a></li>
+
+    <li><a href="{% url 'manage_students' %}" 
+           class="{% if request.resolver_match.url_name == 'manage_students' %}active{% endif %}">
+           👨‍🎓 Students</a></li>
+
+    <li><a href="{% url 'manage_classes' %}" 
+           class="{% if request.resolver_match.url_name == 'manage_classes' %}active{% endif %}">
+           📚 Manage Classes</a></li>
+
+    <li><a href="{% url 'manage_events' %}" 
+           class="{% if request.resolver_match.url_name == 'manage_events' %}active{% endif %}">
+           📅 Manage Events</a></li>
+
+    <li><a href="{% url 'manage_announcements' %}" 
+           class="{% if request.resolver_match.url_name == 'manage_announcements' %}active{% endif %}">
+           📢 Manage Announcements</a></li>
+
+    <li><a href="{% url 'reports_portal' %}" 
+           class="{% if request.resolver_match.url_name == 'reports_portal' %}active{% endif %}">
+           📊 Reports</a></li>
+
+    <li><a href="{% url 'manage_financials' %}" 
+           class="{% if request.resolver_match.url_name == 'manage_financials' %}active{% endif %}">
+           💰 Finances</a></li>
+
+    <li><a href="{% url 'settings_page' %}" 
+           class="{% if request.resolver_match.url_name == 'settings_page' %}active{% endif %}">
+           ⚙ Settings</a></li>
+
+    <li><a href="{% url 'message_type' %}" 
+           class="{% if request.resolver_match.url_name == 'message_type' %}active{% endif %}">
+           📩 Messages</a></li>
+
+    <li><a href="{% url 'portal_logout' %}">🚪 Logout</a></li>
+</ul>
+
     </aside>
 
     <!-- Main Content -->
-    <div class="main-content">
-      {% block main_content %}
-        <h1>Welcome, {{ request.user.username|title }}</h1>
+    <div class="main-content" id="main-content">
+        {% block main_content %}
+        <h1>Welcome Back</h1>
         <p>Role: Management</p>
 
-        <!-- Dashboard Cards -->
+        <!-- Cards -->
         <div class="cards">
-            <div class="card">
-                <h3>Total Students</h3>
-                <p>{{total_students}}</p>
-            </div>
-            <div class="card">
-                <h3>Total Teachers</h3>
-                <p>{{total_teachers}}</p>
-            </div>
-             <div class="card">
-                <h3>Total Parents</h3>
-                <p>{{total_parents}}</p>
-            </div>
-            <div class="card">
-                <h3>Pending Admissions</h3>
-                <p>23</p>
-            </div>
-           
+            <div class="card"><h3>Total Students</h3><p>{{ total_students }}</p></div>
+            <div class="card"><h3>Total Teachers</h3><p>{{ total_teachers }}</p></div>
+            <div class="card"><h3>Total Parents</h3><p>{{ total_parents }}</p></div>
+            <div class="card"><h3>Pending Admissions</h3><p>23</p></div>
+            <div class="card"><h3>Unread visitors message</h3><p>{{ visitors_unread }}</p></div>
+            <div class="card"><h3>Unread portal users messages</h3><p>{{ portal_users_unread }}</p></div>
         </div>
 
-        <!-- Reports Table -->
+        <!-- Table -->
         <div class="table-section">
             <h2>Recent Reports</h2>
             <table>
                 <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Report</th>
-                        <th>Status</th>
-                    </tr>
+                    <tr><th>Date</th><th>Report</th><th>Status</th></tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>01 Oct 2025</td>
-                        <td>Term 3 Fee Summary</td>
-                        <td><span class="status completed">Completed</span></td>
-                    </tr>
-                    <tr>
-                        <td>28 Sep 2025</td>
-                        <td>Exam Performance Report</td>
-                        <td><span class="status pending">Pending</span></td>
-                    </tr>
-                    <tr>
-                        <td>25 Sep 2025</td>
-                        <td>Teacher Attendance</td>
-                        <td><span class="status completed">Completed</span></td>
-                    </tr>
+                    <tr><td>01 Oct 2025</td><td>Term 3 Fee Summary</td><td><span class="status completed">Completed</span></td></tr>
+                    <tr><td>28 Sep 2025</td><td>Exam Performance Report</td><td><span class="status pending">Pending</span></td></tr>
+                    <tr><td>25 Sep 2025</td><td>Teacher Attendance</td><td><span class="status completed">Completed</span></td></tr>
                 </tbody>
             </table>
         </div>
         {% endblock %}
     </div>
 </div>
+
+<!-- Sidebar Toggle Script -->
+<script>
+function toggleSidebar() {
+    const menu = document.getElementById('sidebar-menu');
+    const mainContent = document.getElementById('main-content');
+    menu.classList.toggle('show');
+    mainContent.classList.toggle('hidden');
+    
+    // Update ARIA attribute for accessibility
+    const toggleBtn = document.querySelector('.sidebar-toggle');
+    toggleBtn.setAttribute('aria-expanded', menu.classList.contains('show'));
+}
+
+// Auto-close sidebar when a link is clicked (mobile only)
+document.querySelectorAll('#sidebar-menu a').forEach(link => {
+    link.addEventListener('click', () => {
+        const menu = document.getElementById('sidebar-menu');
+        const mainContent = document.getElementById('main-content');
+        if(window.innerWidth <= 768) {
+            menu.classList.remove('show');
+            mainContent.classList.remove('hidden');
+            document.querySelector('.sidebar-toggle').setAttribute('aria-expanded', 'false');
+        }
+    });
+});
+</script>
 {% endblock %}

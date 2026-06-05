@@ -34,9 +34,10 @@
                 <a href="{% url 'teacher_students_grades_view' %}">📊 Grades</a>
             </li>
             
-            <li class="{% if current_url == 'teacher_messages' %}active{% endif %}">
-                <a href="{% url 'teacher_messages' %}">📩 Messages</a>
-            </li>
+         <li class="{% if current_url == 'chat_room' %}active{% endif %}">
+    <a href="{% url 'chat_room' username=request.user.username %}">📩 Messages</a>
+</li>
+
 
             <li>
                 <a href="{% url 'portal_logout' %}">🚪 Logout</a>
@@ -47,7 +48,7 @@
     </aside>
 
     <div class="main-content">
-    {% block mainContent %}
+    {% block main_content %}
         <h1>Welcome, {{ user.teacher.teacher_name|default:"Teacher"|title }}</h1>
         <p>Role: Teacher</p>
         

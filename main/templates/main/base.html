@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     {# External CSS and JS #}
+        <link href="{% static 'css/bootstrap_offline.css' %}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -41,7 +42,6 @@
             <a href="{% url 'contact' %}" class="{% if current_url == 'contact' %}active-link{% endif %}">Contact</a>
             
             <div class="dropdown">
-                {# The dropdown button itself is often not linked, or linked to the first item #}
                 <a href="#" class="dropbtn {% if current_url in 'admission,gallery,events,FAQs' %}active-link{% endif %}">More</a>
                 <ul class="dropdown-content">
                     <li><a href="{% url 'admission' %}" class="{% if current_url == 'admission' %}active-link{% endif %}">Admission</a></li>
@@ -69,9 +69,9 @@
 
     <footer>
         <div class="footer-content">
-            <p class="credit">Created by <strong>@Samitech Technologies</strong> | 0791577972</p>
+            <p class="credit">Created by <strong>@Sachotech solutions</strong> | 0791577972</p>
             <p class="copyright">
-                &copy; 2025 Edenfield Academy. All rights reserved.
+                &copy; 2025 sachotech solutions. All rights reserved.
             </p>
         </div>
     </footer>

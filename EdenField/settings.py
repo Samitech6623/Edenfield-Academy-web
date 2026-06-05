@@ -30,10 +30,14 @@ ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.100.10']
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'main',
     'management',
     'teachers',
     'parents',
+    'chat',
+    'fees',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -41,6 +45,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+ASGI_APPLICATION = "EdenField.asgi.application"
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',  # Use in-memory layer
+    },
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

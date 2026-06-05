@@ -11,6 +11,26 @@
 <p style="text-align: center; font-size: 18px; color: #555;">
   We'd love to hear from you! Whether you have questions, want to schedule a visit, or enroll your child, we're here to help.
 </p>
+{% if messages %}
+  <ul class="django-messages">
+    {% for message in messages %}
+      <li class="{{ message.tags }}">{{ message }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+<!-- Display form errors if there are any -->
+{% if form.errors %}
+  <div class="error-message">
+    <ul>
+      {% for field in form %}
+        {% for error in field.errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
 
 <div class="contact-container">
   <!-- Contact Info -->
@@ -28,23 +48,44 @@
   <!-- Contact Form -->
   <div class="contact-form">
     <h2>Send Us a Message</h2>
-    <form action="#" method="post">
-      {% csrf_token %}
+   <form action="{% url 'contact' %}" method="post">
+  {% csrf_token %}
 
-      <label for="name">Name</label>
-      <input type="text" id="name" name="name" placeholder="Your Name" required>
+  {{ form.non_field_errors }}
+  
+  <div>
+    {{ form.name.label_tag }}
+    {{ form.name }}
+    {{ form.name.errors }}
+  </div>
+  
+  <div>
+    {{ form.email.label_tag }}
+    {{ form.email }}
+    {{ form.email.errors }}
+  </div>
+  
+  <div>
+    {{ form.phone_number.label_tag }}
+    {{ form.phone_number }}
+    {{ form.phone_number.errors }}
+  </div>
+  
+  <div>
+    {{ form.subject.label_tag }}
+    {{ form.subject }}
+    {{ form.subject.errors }}
+  </div>
+  
+  <div>
+    {{ form.message.label_tag }}
+    {{ form.message }}
+    {{ form.message.errors }}
+  </div>
 
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" placeholder="Your Email" required>
+  <button type="submit">Send Message</button>
+</form>
 
-      <label for="subject">Subject</label>
-      <input type="text" id="subject" name="subject" placeholder="Subject">
-
-      <label for="message">Message</label>
-      <textarea id="message" name="message" rows="5" placeholder="Your Message" required></textarea>
-
-      <button type="submit" aria-label="Send your message to EdenField Academy">Send Message</button>
-    </form>
   </div>
 </div>
 {% endblock %}

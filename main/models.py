@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from django.apps import apps
 
 # Create your models here.
 
@@ -79,7 +80,6 @@ class Parent(models.Model):
     @property
     def display_name(self):
         return f"{self.full_name}"
-    
     def __str__(self):
         return (f"parent:{self.full_name}")
     def delete(self, *args, **kwargs):
@@ -213,6 +213,7 @@ class Student(models.Model):
         active_session = Session.get_active_session()
         if active_session:
             amount_paid = self.total_fees_paid_current_session(active_session)
+            SchoolFeeStructure = apps.get_model("fees", "SchoolFeeStructure")
             try:
                 structure = SchoolFeeStructure.objects.get(
                     class_room=self.current_class, session = active_session
@@ -229,6 +230,19 @@ class Student(models.Model):
     
     def __str__(self):
         return (f"{self.first_name} {self.last_name} {self.admission_number}") 
+    
+class Enrollment(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='enrollments')
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    class_room = models.ForeignKey(ClassRoom, on_delete=models.CASCADE)
+    date_enrolled = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('student', 'session') # Prevents double enrollment in one term
+        ordering = ['-session__year', '-session__term']
+
+    def __str__(self):
+        return f"{self.student.full_name} - {self.class_room.name} ({self.session})"
     
 class Teacher(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='teacher')
@@ -271,28 +285,7 @@ class TeachingClassAssignment(models.Model):
 
 
 
-class FeePayment(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="fee_payment")
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    paid_on = models.DateTimeField(default=timezone.now)
-    receipt_number = models.CharField(max_length=50, unique=True)  # M-Pesa receipt
-    payment_method = models.CharField(max_length=20, choices=[
-        ("MPESA", "M-Pesa"),
-        ("BANK", "Bank"),
-        ("CASH", "Cash"),
-    ], default="MPESA")
-    status = models.CharField(max_length=20, choices=[
-        ("PENDING", "Pending"),
-        ("CONFIRMED", "Confirmed"),
-        ("FAILED", "Failed"),
-    ], default="PENDING")
 
-    @property
-    def display_name(self):
-        return f"{self.student} - {self.amount} ({self.receipt_number}) payment"
-
-    def __str__(self):
-        return f"{self.student} - {self.amount} ({self.status})"
     
 
 class Exam(models.Model):
@@ -325,6 +318,11 @@ class Result(models.Model):
     )    
     remarks = models.TextField(blank=True, null=True)
 
+    @property
+    def display_name(self):
+        grade_str = self.grade_object.grade if self.grade_object else "N/A"
+        return f"{self.student} - {self.subject} ({grade_str})"
+
     def save(self, *args, **kwargs):
         # Automatically assign grade and remarks based on score
         grade_obj = Grade.objects.filter(min_score__lte=self.score, max_score__gte=self.score).first()
@@ -333,38 +331,10 @@ class Result(models.Model):
         else:
             self.grade_object = None
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        grade_str = self.grade_object.grade if self.grade_object else "N/A"
-
-        return f"{self.student} - {self.subject} ({grade_str})"
-
-class FeeComponent(models.Model):
-    name = models.CharField(max_length=50)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    @property
-    def display_name(self):
-        return f"{self.name}: {self.amount}"
-    def __str__(self):
-        return f"{self.name}: {self.amount}"
-
-class SchoolFeeStructure(models.Model):
-    class_room = models.ForeignKey(ClassRoom, on_delete=models.CASCADE, related_name="fee_structures")
-    session = models.ForeignKey(Session,on_delete = models.CASCADE)
-    components = models.ManyToManyField(FeeComponent, related_name='fee_structures')
-    total_amount_required = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
-    @property
-    def display_name(self):
-        return f"{self.class_room.name} -- {self.session.term} -- {self.session.year} fee structure"
-    def calculate_total_amount_required(self):
-        total = self.components.aggregate(total=Sum('amount'))['total'] or 0
-        self.total_amount_required = total
-        self.save(update_fields=['total_amount_required']) # Only update the total field
-
-    def __str__(self):
-        return f"{self.class_room} - {self.session.term} {self.session.year} - {self.total_amount_required}"
     
+    def __str__(self):
+        return self.display_name
+
 
 
 class Announcement(models.Model):
@@ -394,6 +364,48 @@ class Event(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.date})"
+    
+
+class Chat(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.SET_NULL,null=True, related_name='sent_messages')
+    receiver = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,related_name='received_messages')
+    body = models.TextField()
+    is_read = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    reply_to = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='replies')
+    read_on = models.DateTimeField(null=True,blank=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    @property
+    def display_name(self):
+        sender = self.sender.username if self.sender else "Deleted User"
+        receiver = self.receiver.username if self.receiver else "Deleted User"
+        return f"From {sender} to {receiver} on {self.timestamp.strftime('%H:%M')}"
+
+    def __str__(self):
+        return self.display_name
+    
+
+class VisitorMessage(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField(blank=True, null=True)
+    phone_number = models.CharField(max_length=10, blank=True, null=True)
+    subject = models.CharField(max_length=200, blank=True)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    def clean(self):
+     if not self.email and not self.phone_number:
+            raise ValidationError("Please provide either an email address or a phone number.")
+    
+    def __str__(self):
+        return f"{self.name} - {self.subject or 'No Subject'}"
+
+
+
 
 
 

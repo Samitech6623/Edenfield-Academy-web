@@ -21,7 +21,7 @@
             </li>
             
             <li class="{% if current_url == 'my_children' %}active{% endif %}">
-                <a href="{% url 'my_children' %}">👨‍🎓 My Children ({{ children|length }})</a>
+                <a href="{% url 'my_children' %}">👨‍🎓 My Children ({{ user.parent.children.count }})</a>
             </li>
             
             <li class="{% if current_url == 'parent_performance_page' %}active{% endif %}">
@@ -35,6 +35,9 @@
             <li class="{% if current_url == 'events_page' %}active{% endif %}">
                 <a href="{% url 'events_page' %}">📅 Events ({% firstof events|length 0 %})</a>
             </li>
+<li>                <a href="{% url 'chat_room' username=request.user.username  %}">📩 Messages</a>
+</li>
+
             
             <li><a href="{% url 'portal_logout' %}">🚪 Logout</a></li>
             

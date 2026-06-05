@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from django.http import HttpResponseRedirect,HttpResponse
+from django.http import HttpResponseRedirect,HttpResponse,JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView,ListView,UpdateView,CreateView,DeleteView
@@ -7,13 +7,14 @@ from django.contrib.auth import login,logout
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm,AuthenticationForm,PasswordChangeForm,PasswordResetForm
-from main.models import Student,Teacher,Parent,ClassRoom,SchoolFeeStructure,FeePayment,Announcement,Event,Result,Subject,Exam, Session,Grade
+from main.models import Student,Teacher,Parent,ClassRoom,Announcement,Event,Result,Subject,Exam, Session,Grade
+from fees.models import SchoolFeeStructure, FeePayment, FeeComponent
 from django.urls import reverse_lazy
 from django.db.models import Sum,Count,Avg
 from django.utils import timezone
 from django.db import transaction  # Import transaction for robust saving
 from main.utils import (group_student_results, assign_positions,filter_subjects,class_score_summary,handle_own_class_results,
-                    handle_other_class_results,subject_results_with_ranks,get_fee_summary,child_latest_exam_summary)
+                    handle_other_class_results,subject_results_with_ranks,student_statement,child_latest_exam_summary)
 
 from django.forms import modelformset_factory
 from decimal import Decimal
@@ -154,64 +155,54 @@ def parent_performance_page(request):
 
 
 
+
+
 @login_required
 def parent_fees_page(request):
     parent = getattr(request.user, "parent", None)
+
     if not parent:
-        # Handle case where user has no parent profile
         return render(request, "parents/parent_fees_page.html", {"error": "No parent profile found."})
 
     children = parent.children.all()
-    if not children.exists():
-        return render(request, "parents/parent_fees_page.html", {"error": "No children found."})
 
-    # Get current active session
-    current_session = Session.get_active_session()
+    form = FeeStructureSelectionForm()
 
-    # Handle form for session/class selection
-    form = FeeStructureSelectionForm(request.GET or None)
-    if form.is_valid():
-        selected_session = form.cleaned_data["session"]
-        selected_class = form.cleaned_data["class_room"]
-    else:
-        selected_session = current_session
-        selected_class = children.first().current_class
+    return render(request, "parents/parent_fees_page.html", {
+        "form": form,
+        "children": children
+    })
 
-    # Fetch fee structure for the selected session & class
+@login_required
+def ajax_fee_structure(request):
+
+    student_id = request.GET.get("student")
+    session_id = request.GET.get("session")
+    class_id = request.GET.get("class")
+
     fee_structure = SchoolFeeStructure.objects.filter(
-        class_room=selected_class,
-        session=selected_session
+        session_id=session_id,
+        class_room_id=class_id
     ).first()
 
-    fees_data = []
-    for student in children:
-        # Get session-specific fee summary
-        fee_summary = get_fee_summary(student)
+    return render(request,"parents/partials/fee_structure.html",{
+        "fee_structure":fee_structure
+    })
 
-        # Get all payments made by the student
-        payments = student.fee_payment.all().order_by("-paid_on")
+@login_required
+def ajax_statement(request):
 
-        fees_data.append({
-            "student": student,
-            "class": student.current_class,
-            "term": selected_session.term,
-            "year": selected_session.year,
-            "amount_required": fee_summary.get("required", Decimal("0.00")),
-            "total_paid": fee_summary.get("total_paid", Decimal("0.00")),
-            "balance": fee_summary.get("balance", Decimal("0.00")),
-            "status": fee_summary.get("status", "Not Paid"),
-            "payments": payments,
-        })
+    student_id = request.GET.get("student")
 
-    context = {
-        "parent":"parent",
-        "form": form,
-        "fees_data": fees_data,
-        "selected_session": selected_session,
-        "fee_structure": fee_structure,
-    }
+    context = student_statement(student_id)
 
-    return render(request, "parents/parent_fees_page.html", context)
+    return render(
+        request,
+        "parents/partials/statement.html",
+        context
+    )
+
+
 
 @login_required
 def events_page(request):
@@ -221,3 +212,4 @@ def events_page(request):
 
 class page_not_available(TemplateView):
     template_name = 'parents/page_not_available.html'
+

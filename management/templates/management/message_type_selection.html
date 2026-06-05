@@ -1,0 +1,85 @@
+{% extends 'management/base_management_dashboard.html' %}
+{% load static %}
+
+{% block main_content %}
+
+<style>
+    .messages-card {
+        background: #ffffff;
+        border-radius: 18px;
+        padding: 40px;
+        max-width: 650px;
+        margin: 40px auto;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        transition: 0.3s ease;
+    }
+    .messages-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    }
+
+    .btn-tab-container .btn {
+        border-radius: 50px;
+        padding: 12px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        transition: all 0.25s ease;
+        border: 2px solid #c5c5c5;
+    }
+
+    .btn-tab-container .btn:hover {
+        background-color: white;
+        color: brown;
+        border-color: brown;
+    }
+
+    .btn-tab-container .btn.active {
+        background-color: brown;
+        color: white !important;
+        border-color: brown;
+        box-shadow: 0 4px 10px rgba(165, 42, 42, 0.35);
+    }
+
+    .btn-tab-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+.portal{
+background-color: blue;
+color: white;
+}
+.visitors{
+background-color: brown;
+color: white;
+}
+</style>
+
+<div class="messages-card text-center">
+
+    <h2 class="mb-3" style="color: brown; font-weight: 700;">
+        Messages Center
+    </h2>
+
+    <p class="mb-4" style="color:#6b6b6b; font-size: 17px;">
+        Choose which messages you want to view
+    </p>
+
+    <!-- Tabs / Buttons -->
+    <div class="btn-tab-container">
+
+        <a href="{% url 'chat_room' username=request.user.username %}"
+           class="btn {% if tab == 'internal' %}active{% endif %} portal">
+            Portal Users Messages
+        </a>
+
+        <a href="{% url 'visitors_messages' %}"
+           class="btn {% if tab == 'visitor' %}active{% endif %} visitors">
+            Visitors Messages
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}
